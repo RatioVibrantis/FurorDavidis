@@ -305,6 +305,14 @@ After each swap, the application checks that TCP:443 on the VPS still responds. 
 | `Adaptive mode` | `conservative` / `balanced` / `aggressive` |
 | `RAG timeout penalty` | `low/base/high` timeout score penalty |
 
+### Adaptive Mode Types
+
+- `conservative`: safer profile for unstable networks. Uses shorter sessions, fewer URLs, lower chain depth, stricter timeout behavior, and a lower site-cap.
+- `balanced`: default profile. Keeps a practical middle ground between realism, load, and stability for most users.
+- `aggressive`: maximum camouflage profile. Uses longer sessions, more URLs, deeper chains, higher site-cap, and more active RAG influence.
+
+Adaptive control changes these parameters live: session length, URL count, chain depth, RAG weight, site-cap, and timeout policy.
+
 ---
 
 ## Building from Source
