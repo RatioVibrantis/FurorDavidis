@@ -1,0 +1,24 @@
+# Build artifacts
+/build/bin/
+*.exe
+*.tar
+
+# Runtime state (contains secrets / local environment)
+/furor_profile.json
+/furor_memory.json
+/furor_debug.log
+/build/bin/furor_profile.json
+/build/bin/furor_memory.json
+/build/bin/furor_debug.log
+
+# Local AWG/runtime binaries
+/build/bin/awg/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Optional local docs/export artifacts
+*.docx

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Furor Davidis</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">FD Furor Davidis</div>
+  <div class="statusbar">
+    <span id="dot-awg" class="dot off" title="AWG tunnel"></span>
+    <span id="txt-awg">Disconnected</span>
+    <span class="sep">|</span>
+    <span id="dot-ai" class="dot off" title="AI orchestrator"></span>
+    <span id="txt-ai">AI</span>
+    <span class="sep">|</span>
+    <span id="txt-decoy" class="muted">decoy: -</span>
+  </div>
+  <select id="lang-select" onchange="setLanguage(this.value)" style="width:88px">
+    <option value="en">English</option>
+    <option value="ru">Русский</option>
+  </select>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="deploy" data-i18n="tab_deploy">Deploy</button>
+  <button class="tab" data-tab="connect" data-i18n="tab_connect">Connect</button>
+  <button class="tab" data-tab="cover" data-i18n="tab_cover">AI Cover</button>
+  <button class="tab" data-tab="memory" data-i18n="tab_memory">Memory</button>
+  <button class="tab" data-tab="diag" data-i18n="tab_diag">Diagnostics</button>
+  <button class="tab" data-tab="settings" data-i18n="tab_settings">Settings</button>
+</nav>
+
+<div id="tab-deploy" class="pane active">
+  <div class="card">
+    <div class="card-title" id="ttl-vps-connection">VPS connection</div>
+    <div class="form4">
+      <label><span id="lbl-host">Host / IP</span><input id="d-host" type="text" placeholder="1.2.3.4"/></label>
+      <label><span id="lbl-port">SSH Port</span><input id="d-port" type="number" value="22"/></label>
+      <label><span id="lbl-user">User</span><input id="d-user" type="text" value="root"/></label>
+      <label><span id="lbl-pass">Password</span><input id="d-pass" type="password"/></label>
+    </div>
+    <div class="card-title" style="margin-top:10px" id="ttl-decoy-domains">Decoy domains (xray facade)</div>
+    <div id="decoy-list" class="taglist"></div>
+    <button class="btn-sm" onclick="addDecoy()" id="btn-add-domain">+ Add domain</button>
+    <div class="hint" id="hint-decoys">The first domain is used during deploy. HotSwap rotates this list.</div>
+  </div>
+  <div class="actions">
+    <button class="btn-primary" onclick="doDeploy()" id="btn-start-deploy">Start deploy</button>
+    <button onclick="doVerify()" id="btn-verify-server">Verify server</button>
+  </div>
+  <div class="card log-card">
+    <div class="card-title"><span id="ttl-deploy-log">Deploy log</span> <button class="btn-sm" onclick="clearDeployLog()" id="btn-clear-deploy-log">clear</button></div>
+    <div id="deploy-log" class="log"></div>
+  </div>
+</div>
+
+<div id="tab-connect" class="pane">
+  <div class="card">
+    <div class="card-title" id="ttl-awg-tunnel">AWG tunnel</div>
+    <div id="conn-status-box" class="status-box disconnected">
+      <span id="conn-icon">x</span>
+      <span id="conn-text">Disconnected</span>
+    </div>
+    <div class="hint" id="conn-hint">Deploy is complete. Click Connect to start the tunnel.</div>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn-primary" id="btn-connect" onclick="doConnect()">Libertad</button>
+      <button id="btn-disconnect" onclick="doDisconnect()" disabled>Disconnect</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-hotswap">HotSwap decoy domain</div>
+    <div class="row">
+      <select id="hs-domain" style="flex:1"></select>
+      <button onclick="doHotSwap()" id="btn-hotswap-switch">Switch</button>
+    </div>
+    <div class="hint" id="hint-hotswap">Changes the active xray decoy domain without dropping AWG.</div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-connection-status">Connection status</div>
+    <div class="kv-grid" id="conn-info">
+      <span class="k" id="k-awg-port">AWG port</span><span class="v" id="ci-port">-</span>
+      <span class="k" id="k-active-decoy">Active decoy</span><span class="v" id="ci-decoy">-</span>
+      <span class="k" id="k-physical-ip">Physical IP</span><span class="v" id="ci-physip">-</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-hotswap-settings">HotSwap</div>
+    <label class="toggle"><input type="checkbox" id="s-hs-enabled"/> <span id="lbl-hs-enable">Enable automatic domain rotation</span></label>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:11px;color:var(--muted)">
+      <span id="lbl-hs-interval">Interval (min)</span> <input id="s-hs-interval" type="number" value="30" min="5" style="width:70px"/>
+    </label>
+  </div>
+</div>
+
+<div id="tab-cover" class="pane">
+  <div class="card">
+    <div class="card-title" id="ttl-ai-orchestrator">AI orchestrator</div>
+    <div id="ai-status-box" class="status-box disconnected">
+      <span id="ai-icon">x</span>
+      <span id="ai-text">AI</span>
+    </div>
+    <div class="actions" style="margin-top:10px">
+      <button class="btn-primary" id="btn-ai-start" onclick="doAIStart()">Start</button>
+      <button id="btn-ai-stop" onclick="doAIStop()" disabled>Stop</button>
+    </div>
+    <div class="kv-grid" style="margin-top:10px">
+      <span class="k" id="k-last-action">Last action</span><span class="v" id="ai-last">-</span>
+      <span class="k" id="k-session">Session</span><span class="v" id="ai-session">0 min</span>
+      <span class="k" id="k-ai-model">AI model</span><span class="v" id="ai-model-status">-</span>
+    </div>
+    <div class="card-title" style="margin-top:10px" id="ttl-adaptive-live">Adaptive live</div>
+    <div class="kv-grid" id="adaptive-live">
+      <span class="k" id="k-ad-enabled">Enabled</span><span class="v" id="ad-enabled">-</span>
+      <span class="k" id="k-ad-mode">Mode</span><span class="v" id="ad-mode">-</span>
+      <span class="k" id="k-ad-session">Session (min)</span><span class="v" id="ad-session">-</span>
+      <span class="k" id="k-ad-url">URL count</span><span class="v" id="ad-url">-</span>
+      <span class="k" id="k-ad-depth">Chain depth</span><span class="v" id="ad-depth">-</span>
+      <span class="k" id="k-ad-sitecap">Site cap</span><span class="v" id="ad-sitecap">-</span>
+      <span class="k" id="k-ad-rag">RAG weight</span><span class="v" id="ad-rag">-</span>
+      <span class="k" id="k-ad-policy">Timeout policy</span><span class="v" id="ad-policy">-</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span id="ttl-cover-sites">Cover Sites</span>
+      <button class="btn-sm" onclick="addSite()" id="btn-cover-add">+ Add</button>
+    </div>
+    <div class="form4" style="margin-bottom:10px">
+      <label><span id="lbl-cover-list">Cover list</span>
+        <select id="cover-list-select" onchange="onCoverListChange(this.value)"></select>
+      </label>
+      <label><span id="lbl-list-name">List name</span>
+        <input id="cover-list-name" type="text" placeholder="List name"/>
+      </label>
+    </div>
+    <div class="actions" style="margin-bottom:10px">
+      <button class="btn-sm" onclick="createCoverList()" id="btn-create-list">Create list</button>
+      <button class="btn-sm" onclick="renameCoverList()" id="btn-rename-list">Rename</button>
+      <button class="btn-sm danger" onclick="deleteCoverList()" id="btn-delete-list">Delete list</button>
+    </div>
+    <div id="sites-list" class="sitelist"></div>
+    <div class="form4" style="margin-top:10px">
+      <label><span id="lbl-intensity">Intensity</span>
+        <select id="intensity">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </label>
+      <label><span id="lbl-session-len">Session length (min)</span><input id="session-min" type="number" value="20" min="5" max="120"/></label>
+    </div>
+    <button onclick="saveCover()" id="btn-save-cover">Save</button>
+    <div class="hint" id="hint-cover">Cover traffic goes through the physical adapter, bypassing AWG. Uses uTLS fingerprints for realistic web traffic.</div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-ai-prompt">AI prompt</div>
+    <div class="actions" style="margin-bottom:8px">
+      <button class="btn-sm" onclick="openPromptEditor()" id="btn-prompt-open">View prompt</button>
+    </div>
+    <div id="prompt-editor-wrap" style="display:none">
+      <textarea id="ai-prompt-text" style="width:100%;min-height:160px;resize:vertical" readonly></textarea>
+      <div class="actions" style="margin-top:8px">
+        <button class="btn-sm" onclick="enablePromptEditing()" id="btn-prompt-edit">Edit</button>
+        <button class="btn-sm" onclick="savePromptEditor()" id="btn-prompt-save" disabled>Save</button>
+        <button class="btn-sm" onclick="resetPromptRecommended()" id="btn-prompt-reset">Reset to recommended</button>
+        <button class="btn-sm danger" onclick="closePromptEditor()" id="btn-prompt-close">Close</button>
+      </div>
+      <div class="hint" id="hint-prompt-limit">System prompt is capped at 700 characters to keep requests compact for small models.</div>
+    </div>
+  </div>
+  <div class="card log-card">
+    <div class="card-title"><span id="ttl-ai-log">AI log</span> <button class="btn-sm" onclick="clearAILog()" id="btn-clear-ai-log">clear</button></div>
+    <div id="ai-log" class="log"></div>
+  </div>
+</div>
+
+<div id="tab-memory" class="pane">
+  <div class="card">
+    <div class="card-title"><span id="ttl-rag-memory">RAG memory</span>
+      <button class="btn-sm" onclick="exportMem()" id="btn-mem-export">Export</button>
+      <button class="btn-sm" onclick="importMem()" id="btn-mem-import">Import</button>
+      <button class="btn-sm danger" onclick="clearMem()" id="btn-mem-clear">Clear</button>
+    </div>
+    <div class="hint" id="hint-memory">Stores patterns that worked in your network and injects them into AI prompts. File: <code>furor_memory.json</code>.</div>
+    <div id="mem-stats" class="stat-row"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-top-entries">Top entries</div>
+    <div id="mem-entries" class="mem-list"></div>
+  </div>
+</div>
+
+<div id="tab-diag" class="pane">
+  <div class="card">
+    <div class="card-title" id="ttl-local-files">Local files</div>
+    <div id="diag-local" class="diag-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-server">Server</div>
+    <div id="diag-server" class="diag-list"></div>
+  </div>
+  <div class="actions">
+    <button class="btn-primary" onclick="runDiag()" id="btn-run-diagnostics">Run diagnostics</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="card-title" id="ttl-requirements">Requirements</div>
+    <div class="hint" id="hint-requirements">
+      Install <strong>LM Studio</strong> and start <strong>Local Server</strong>.<br/>
+      Put AWG files next to <code>FurorDavidis.exe</code>:<br/>
+      <pre class="pre">FurorDavidis.exe
+awg\
+    amneziawg.exe
+    wintun.dll</pre>
+    </div>
+    <button class="btn-sm" onclick="open_('https://lmstudio.ai')" id="btn-open-lmstudio">Open LM Studio</button>
+  </div>
+</div>
+
+<div id="tab-settings" class="pane">
+  <div class="card">
+    <div class="card-title" id="ttl-ui-language">Interface language</div>
+    <label><span id="lbl-ui-language">Language</span>
+      <select id="s-lang-select" onchange="setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="ttl-profiles">Servers & Clients</div>
+    <div class="form4">
+      <label><span id="lbl-active-profile">Active server</span>
+        <select id="s-server-select" onchange="selectServer(this.value)"></select>
+      </label>
+      <label><span id="lbl-profile-name">Server name</span>
+        <input id="s-server-name" type="text" placeholder="New server name"/>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn-sm" onclick="createServer()" id="btn-profile-create">Create Server</button>
+      <button class="btn-sm danger" onclick="deleteActiveServer()" id="btn-profile-delete">Delete Server</button>
+      <button class="btn-sm" onclick="exportActiveProfile()" id="btn-profile-export">Export</button>
+      <button class="btn-sm" onclick="importProfile()" id="btn-profile-import">Import</button>
+    </div>
+    <div class="form4" style="margin-top:10px">
+      <label><span id="lbl-active-client">Active client</span>
+        <select id="s-client-select" onchange="selectClient(this.value)"></select>
+      </label>
+      <label><span id="lbl-client-name">Client name</span>
+        <input id="s-client-name" type="text" placeholder="New client name"/>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn-sm" onclick="createClient()" id="btn-client-create">Create Client</button>
+      <button class="btn-sm danger" onclick="deleteActiveClient()" id="btn-client-delete">Delete Client</button>
+      <button class="btn-sm" onclick="refreshServersAndClients()" id="btn-profile-refresh">Refresh</button>
+    </div>
+    <div class="hint" id="hint-profiles">Each profile keeps a separate VPS/AWG/AI config. Switching profile stops active AI and disconnects AWG.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="ttl-ai-backend">AI backend (LM Studio)</div>
+    <div class="form4">
+      <label><span id="lbl-model-override">Model override (optional)</span>
+        <input id="s-ai-model" type="text" placeholder="auto (loaded model in LM Studio)"/>
+      </label>
+      <label><span id="lbl-models-loaded">Models loaded in LM Studio</span>
+        <select id="s-ai-model-select" onchange="applySelectedLMStudioModel()">
+          <option value="">(refresh list)</option>
+        </select>
+      </label>
+      <label><span id="lbl-rag-timeout-policy">RAG timeout penalty</span>
+        <select id="s-rag-timeout-policy">
+          <option id="opt-rag-timeout-low" value="low">Low (0.10)</option>
+          <option id="opt-rag-timeout-base" value="base">Base (0.15)</option>
+          <option id="opt-rag-timeout-high" value="high">High (0.20)</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn-sm" onclick="refreshLMStudioModels()" id="btn-refresh-models">Refresh model list</button>
+    <label class="toggle" style="margin-top:10px"><input type="checkbox" id="s-adaptive-enabled"/> <span id="lbl-adaptive-enable">Enable adaptive control</span></label>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:11px;color:var(--muted)">
+      <span id="lbl-adaptive-mode">Adaptive mode</span>
+      <select id="s-adaptive-mode" style="width:170px">
+        <option id="opt-adaptive-conservative" value="conservative">Conservative</option>
+        <option id="opt-adaptive-balanced" value="balanced">Balanced</option>
+        <option id="opt-adaptive-aggressive" value="aggressive">Aggressive</option>
+      </select>
+    </label>
+    <div class="hint" id="hint-ai-backend">
+      Open LM Studio -> Local Server -> load model -> Start Server.<br/>
+      Recommended: Qwen3-1.7B or any instruct model.<br/>
+      If your PC is low on compute, consider 0.6B models.
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="ttl-awg">AWG</div>
+    <div class="form4">
+      <label><span id="lbl-awg-path">Path to amneziawg.exe</span><input id="s-awg-exe" type="text" placeholder="awg\amneziawg.exe"/></label>
+      <label><span id="lbl-awg-iface">Interface name</span><input id="s-awg-iface" type="text" value="furor"/></label>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn-primary" onclick="saveSettings()" id="btn-save-settings">Save settings</button>
+  </div>
+</div>
+
+<script src="wailsjs/runtime/runtime.js"></script>
+<script src="wailsjs/go/main/App.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
