@@ -325,6 +325,13 @@ wails build -ldflags="-s -w -H windowsgui"
 
 ---
 
+## Участники
+
+- **RatioVibrantis** — архитектура, продуктовая концепция, системная инженерия.
+- **OpenAI Codex (AI assistant)** — помощь в реализации, рефакторинг, отладка и подготовка документации.
+
+---
+
 ## Благодарности
 
 **[AmneziaWG / Команда Amnezia](https://github.com/amnezia-vpn/amneziawg-go)**

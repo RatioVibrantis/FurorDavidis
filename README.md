@@ -325,6 +325,13 @@ wails build -ldflags="-s -w -H windowsgui"
 
 ---
 
+## Contributors
+
+- **RatioVibrantis** — architecture, product direction, systems engineering.
+- **OpenAI Codex (AI assistant)** — implementation support, refactoring, debugging, and documentation drafting.
+
+---
+
 ## Acknowledgements
 
 **[AmneziaWG / Amnezia Team](https://github.com/amnezia-vpn/amneziawg-go)**
